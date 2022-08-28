@@ -40,10 +40,10 @@ client.on("interactionCreate", async (interaction) => {
     ) as RoleCategoryOption;
     const description = interaction.options.getString("description", false);
 
-    const errors = [];
+    const errors: string[] = [];
 
-    let courseCategory = null;
-    let overarchingCategory = null;
+    let courseCategory: RoleCategoryOption | null = null;
+    let overarchingCategory: string | null = null;
 
     if (
       ["freshman", "sophomore", "junior", "senior", "grad"].includes(
