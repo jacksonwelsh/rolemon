@@ -10,13 +10,13 @@ export const sequelize = new Sequelize("database", "user", "password", {
 });
 
 export const Tags = sequelize.define("tags", {
-  name: {
+  name: STRING,
+  description: TEXT,
+  roleId: {
     type: STRING,
     unique: true,
   },
-  description: TEXT,
-  roleId: STRING,
   emoji: STRING,
   class: ENUM("freshman", "sophomore", "junior", "senior", "grad"),
-  category: ENUM('course', 'pronoun', 'other')
+  category: ENUM("course", "pronoun", "other"),
 });

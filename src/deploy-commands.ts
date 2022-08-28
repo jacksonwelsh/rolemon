@@ -157,6 +157,26 @@ const commands = [
             .setRequired(true)
         )
     ),
+  new SlashCommandBuilder()
+    .setName("admin")
+    .setDescription("rolemon admin commands")
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("button")
+        .setDescription("Post a message with a button to set roles")
+        .addChannelOption((option) =>
+          option
+            .setName("channel")
+            .setDescription("Channel to send the button message in")
+            .setRequired(false)
+        )
+        .addStringOption((option) =>
+          option
+            .setName("message")
+            .setDescription("Message to send with the button")
+            .setRequired(false)
+        )
+    ),
 ].map((command) => command.toJSON());
 
 const rest = new REST({ version: "9" }).setToken(token);
