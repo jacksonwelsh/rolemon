@@ -16,10 +16,13 @@
     "discord-api-types": "^0.36.1",
     "discord.js": "^13.8.1",
     "dotenv": "^16.0.1",
-    "envsafe": "^2.0.3"
+    "envsafe": "^2.0.3",
+    "sequelize": "^6.21.4",
+    "sqlite3": "^5.0.11"
   },
   "devDependencies": {
     "@types/node": "^18.0.4",
+    "@types/sequelize": "^4.28.14",
     "nodemon": "^2.0.19",
     "ts-node": "^10.9.0"
   }

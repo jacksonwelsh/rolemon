@@ -1,17 +1,27 @@
 import {
   Client,
-  Guild,
   GuildMember,
   Intents,
   MessageActionRow,
   MessageSelectMenu,
 } from "discord.js";
 import environment from "./env";
-import roles, { RoleClass } from "./roles";
+import { getStructuredRoles, RoleType } from "./roles";
+import { Tags } from "./db";
+
+type RoleCategoryOption =
+  | "freshman"
+  | "sophomore"
+  | "junior"
+  | "senior"
+  | "grad"
+  | "pronoun"
+  | "other";
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
 client.once("ready", () => {
+  Tags.sync();
   console.log("ready!");
 });
 
@@ -20,16 +30,84 @@ client.login(environment.token);
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isCommand()) return;
 
+  if (interaction.commandName === "rolebindingcreate") {
+    const name = interaction.options.getString("label", true);
+    const roleId = interaction.options.getRole("role", true).id;
+    let emoji = interaction.options.getString("emoji", false);
+    const responseCategory = interaction.options.getString(
+      "category",
+      true
+    ) as RoleCategoryOption;
+    const description = interaction.options.getString("description", false);
+
+    const errors = [];
+
+    let courseCategory = null;
+    let overarchingCategory = null;
+
+    if (
+      ["freshman", "sophomore", "junior", "senior", "grad"].includes(
+        responseCategory
+      )
+    ) {
+      courseCategory = responseCategory;
+      overarchingCategory = "course";
+    } else {
+      overarchingCategory = responseCategory;
+    }
+
+    if (emoji != null) {
+      const foundEmote = client.emojis.cache.find((emote) => {
+        const result =
+          emote.name?.toLowerCase() === emoji?.trim().toLowerCase() ||
+          emote.id === emoji?.trim();
+
+        // convert name to ID if needed
+        if (result) emoji = emote.id;
+        return result;
+      });
+
+      if (!foundEmote) {
+        emoji = null;
+        errors.push(
+          "Couldn't find the emoji you specified, but everything else was saved properly."
+        );
+      }
+    }
+
+    try {
+      const tag = await Tags.create({
+        name,
+        description,
+        roleId,
+        emoji,
+        class: courseCategory,
+        category: overarchingCategory,
+      });
+
+      return interaction.reply(
+        `Role binding ${tag.getDataValue("name")} created. ` + errors.join(", ")
+      );
+    } catch (e: any) {
+      if (e.name === "SequelizeUniqueConstraintError") {
+        return interaction.reply("That tag already exists.");
+      }
+
+      return interaction.reply("Something went wrong with adding a tag.");
+    }
+  }
+
   if (interaction.commandName === "roles") {
-    const freshmanRoles = roles.filter(
-      (role) => role.class === RoleClass.FRESHMAN
-    );
-    const sophomoreRoles = roles.filter(
-      (role) => role.class === RoleClass.SOPHOMORE
-    );
-    const juniorRoles = roles.filter((role) => role.class === RoleClass.JUNIOR);
-    const seniorRoles = roles.filter((role) => role.class === RoleClass.SENIOR);
-    const gradRoles = roles.filter((role) => role.class === RoleClass.GRAD);
+    const roles = await getStructuredRoles();
+
+    const freshmanRoles = roles[RoleType.FRESHMAN];
+    const sophomoreRoles = roles[RoleType.SOPHOMORE];
+    const juniorRoles = roles[RoleType.JUNIOR];
+    const seniorRoles = roles[RoleType.SENIOR];
+    const gradRoles = roles[RoleType.GRAD];
+
+    console.log({ seniorRoles });
+
     const rows = [
       new MessageActionRow().addComponents(
         new MessageSelectMenu()
@@ -113,6 +191,8 @@ client.on("interactionCreate", async (interaction) => {
       ),
     ];
 
+    console.log({ rows });
+
     await interaction.reply({
       content: "Pick some roles!",
       components: rows,
@@ -123,36 +203,40 @@ client.on("interactionCreate", async (interaction) => {
 
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isSelectMenu()) return;
+  const roles = await getStructuredRoles();
 
-  let roleClass: RoleClass;
+  let roleClass: RoleType;
 
   switch (interaction.customId) {
     case "select-1000":
-      roleClass = RoleClass.FRESHMAN;
+      roleClass = RoleType.FRESHMAN;
       break;
     case "select-2000":
-      roleClass = RoleClass.SOPHOMORE;
+      roleClass = RoleType.SOPHOMORE;
       break;
     case "select-3000":
-      roleClass = RoleClass.JUNIOR;
+      roleClass = RoleType.JUNIOR;
       break;
     case "select-4000":
-      roleClass = RoleClass.SENIOR;
+      roleClass = RoleType.SENIOR;
       break;
     case "select-5000":
-      roleClass = RoleClass.GRAD;
+      roleClass = RoleType.GRAD;
+    default:
+      roleClass = RoleType.OTHER;
   }
 
   const member: any = interaction.member as GuildMember;
 
-  const rolesToRemove = roles
-    .filter((r) => r.class === roleClass)
+  console.log({ values: interaction.values });
+
+  const rolesToRemove = roles[roleClass]
     .filter((r) => !interaction.values.includes(r.value))
     .filter((r) => userHasRole(r.roleId, member as GuildMember))
     .map((r) => r.roleId);
 
   const rolesToApply = interaction.values.map(
-    (value) => roles.find((r) => r.value === value)?.roleId
+    (value) => roles[roleClass].find((r) => r.value === value)?.roleId
   );
 
   rolesToApply.forEach((role) => member.roles.add(role));
