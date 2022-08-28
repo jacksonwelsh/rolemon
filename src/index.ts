@@ -8,15 +8,11 @@ import {
 import environment from "./env";
 import { getStructuredRoles, RoleType } from "./roles";
 import { Tags } from "./db";
-
-type RoleCategoryOption =
-  | "freshman"
-  | "sophomore"
-  | "junior"
-  | "senior"
-  | "grad"
-  | "pronoun"
-  | "other";
+import {
+  handleCreateRoleBinding,
+  handleDeleteRoleBinding,
+  handleUpdateRoleBinding,
+} from "./bindingManager";
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
@@ -30,70 +26,15 @@ client.login(environment.token);
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isCommand()) return;
 
-  if (interaction.commandName === "rolebindingcreate") {
-    const name = interaction.options.getString("label", true);
-    const roleId = interaction.options.getRole("role", true).id;
-    let emoji = interaction.options.getString("emoji", false);
-    const responseCategory = interaction.options.getString(
-      "category",
-      true
-    ) as RoleCategoryOption;
-    const description = interaction.options.getString("description", false);
+  console.log({ interaction });
 
-    const errors: string[] = [];
-
-    let courseCategory: RoleCategoryOption | null = null;
-    let overarchingCategory: string | null = null;
-
-    if (
-      ["freshman", "sophomore", "junior", "senior", "grad"].includes(
-        responseCategory
-      )
-    ) {
-      courseCategory = responseCategory;
-      overarchingCategory = "course";
-    } else {
-      overarchingCategory = responseCategory;
-    }
-
-    if (emoji != null) {
-      const foundEmote = client.emojis.cache.find((emote) => {
-        const result =
-          emote.name?.toLowerCase() === emoji?.trim().toLowerCase() ||
-          emote.id === emoji?.trim();
-
-        // convert name to ID if needed
-        if (result) emoji = emote.id;
-        return result;
-      });
-
-      if (!foundEmote) {
-        emoji = null;
-        errors.push(
-          "Couldn't find the emoji you specified, but everything else was saved properly."
-        );
-      }
-    }
-
-    try {
-      const tag = await Tags.create({
-        name,
-        description,
-        roleId,
-        emoji,
-        class: courseCategory,
-        category: overarchingCategory,
-      });
-
-      return interaction.reply(
-        `Role binding ${tag.getDataValue("name")} created. ` + errors.join(", ")
-      );
-    } catch (e: any) {
-      if (e.name === "SequelizeUniqueConstraintError") {
-        return interaction.reply("That tag already exists.");
-      }
-
-      return interaction.reply("Something went wrong with adding a tag.");
+  if (interaction.commandName === "rolebinding") {
+    if (interaction.options.getSubcommand() == "create") {
+      return await handleCreateRoleBinding(interaction, client);
+    } else if (interaction.options.getSubcommand() === "delete") {
+      return await handleDeleteRoleBinding(interaction);
+    } else if (interaction.options.getSubcommand() === "update") {
+      return await handleUpdateRoleBinding(interaction, client);
     }
   }
 
