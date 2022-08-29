@@ -8,7 +8,21 @@ const { clientId, token } = environment;
 const commands = [
   new SlashCommandBuilder()
     .setName("roles")
-    .setDescription("Select some roles!"),
+    .setDescription("Select some roles!")
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("course")
+        .setDescription(
+          "Assign roles that grant access to course-specific channels"
+        )
+    )
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("cosmetic")
+        .setDescription(
+          "Assign other cosmetic roles such as pronouns and class colors"
+        )
+    ),
   new SlashCommandBuilder()
     .setName("rolebinding")
     .setDescription("Manage your role menu bindings")
@@ -57,6 +71,10 @@ const commands = [
               {
                 name: "Pronoun Role",
                 value: "pronoun",
+              },
+              {
+                name: "Class Role (freshman etc)",
+                value: "class",
               },
               {
                 name: "Other Role",
@@ -143,6 +161,14 @@ const commands = [
           option
             .setName("emoji")
             .setDescription("ID of the emoji to use")
+            .setRequired(false)
+        )
+        .addIntegerOption((option) =>
+          option
+            .setName("rank")
+            .setDescription(
+              "Sorting rank. Lower ranks float to the top, unranked (or 0 rank) uses name to sort."
+            )
             .setRequired(false)
         )
     )

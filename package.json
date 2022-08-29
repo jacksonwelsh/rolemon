@@ -24,6 +24,7 @@
     "@types/node": "^18.0.4",
     "@types/sequelize": "^4.28.14",
     "nodemon": "^2.0.19",
+    "sequelize-cli": "^6.4.1",
     "ts-node": "^10.9.0"
   }
 }

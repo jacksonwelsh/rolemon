@@ -13,7 +13,7 @@ import { userHasRole } from "./util";
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
 client.once("ready", () => {
-  Tags.sync();
+  Tags.sync({ alter: true });
   console.log("ready!");
 });
 
@@ -37,7 +37,10 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   if (interaction.commandName === "roles") {
-    return await sendRoleSelect(interaction);
+    if (interaction.options.getSubcommand() === "course") {
+      return await sendRoleSelect(interaction, "course");
+    }
+    return await sendRoleSelect(interaction, "other");
   }
 });
 
@@ -48,12 +51,17 @@ client.on("interactionCreate", async (interaction) => {
   if (!interaction.isButton()) return;
 
   if (interaction.customId === "sendRoleMenu")
-    return await sendRoleSelect(interaction);
+    return await sendRoleSelect(interaction, "course");
 });
 
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isSelectMenu()) return;
-  const roles = await getStructuredRoles();
+  if (!interaction.guildId)
+    return interaction.reply({
+      content: "Failed to assign roles.",
+      ephemeral: true,
+    });
+  const roles = await getStructuredRoles(interaction.guildId);
 
   let roleClass: RoleType;
 
@@ -72,6 +80,14 @@ client.on("interactionCreate", async (interaction) => {
       break;
     case "select-5000":
       roleClass = RoleType.GRAD;
+      break;
+    case "select-pronoun":
+      roleClass = RoleType.PRONOUN;
+      break;
+    case "select-class":
+      roleClass = RoleType.CLASS;
+      break;
+    case "select-other":
     default:
       roleClass = RoleType.OTHER;
   }

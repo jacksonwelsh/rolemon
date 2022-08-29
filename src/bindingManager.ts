@@ -1,5 +1,6 @@
 import { CacheType, Client, CommandInteraction } from "discord.js";
 import { Tags } from "./db";
+import { CourseLevel, OverarchingCategory } from "./roles";
 
 type RoleCategoryOption =
   | "freshman"
@@ -9,10 +10,6 @@ type RoleCategoryOption =
   | "grad"
   | "pronoun"
   | "other";
-
-type CourseLevel = "freshman" | "sophomore" | "junior" | "senior" | "grad";
-
-type OverarchingCategory = "course" | "pronoun" | "other";
 
 const EMOTE_NOT_FOUND =
   "We couldn't find your specified emote but everything else was saved properly.";
@@ -49,15 +46,24 @@ export const handleCreateRoleBinding = async (
       category: overarchingCategory,
     });
 
-    return interaction.reply(
-      `Role binding ${tag.getDataValue("name")} created. ` + errors.join(", ")
-    );
+    return interaction.reply({
+      content:
+        `Role binding ${tag.getDataValue("name")} created. ` +
+        errors.join(", "),
+      ephemeral: true,
+    });
   } catch (e: any) {
     if (e.name === "SequelizeUniqueConstraintError") {
-      return interaction.reply("That tag already exists.");
+      return interaction.reply({
+        content: "That tag already exists.",
+        ephemeral: true,
+      });
     }
 
-    return interaction.reply("Something went wrong with adding a tag.");
+    return interaction.reply({
+      content: "Something went wrong with adding a tag.",
+      ephemeral: true,
+    });
   }
 };
 
@@ -69,11 +75,15 @@ export const handleDeleteRoleBinding = async (
   const result = await Tags.destroy({ where: { roleId: role.id } });
 
   if (result > 0)
-    return interaction.reply(
-      `Successfully deleted binding for role ${role.name}.`
-    );
+    return interaction.reply({
+      content: `Successfully deleted binding for role ${role.name}.`,
+      ephemeral: true,
+    });
   else
-    return interaction.reply(`Couldn't find a binding for role ${role.name}.`);
+    return interaction.reply({
+      content: `Couldn't find a binding for role ${role.name}.`,
+      ephemeral: true,
+    });
 };
 
 export const handleUpdateRoleBinding = async (
@@ -93,11 +103,12 @@ export const handleUpdateRoleBinding = async (
     false
   ) as RoleCategoryOption;
   const description = interaction.options.getString("description", false);
+  const rank = interaction.options.getInteger("rank", false);
 
   const errors: string[] = [];
   if (emoji === undefined) errors.push(EMOTE_NOT_FOUND);
 
-  const changes: Record<string, string | null> = {};
+  const changes: Record<string, string | number | null> = {};
 
   if (name) changes["name"] = name;
 
@@ -116,20 +127,30 @@ export const handleUpdateRoleBinding = async (
     changes["description"] = description;
   }
 
+  if (rank) {
+    if (rank === 0) changes["rank"] = null;
+    else changes["rank"] = rank;
+  }
+
   const existingBinding = await Tags.findOne({ where: { roleId } });
   if (!existingBinding) {
-    return interaction.reply(
-      `Could not find a binding for ${role.name} to update.`
-    );
+    return interaction.reply({
+      content: `Could not find a binding for ${role.name} to update.`,
+      ephemeral: true,
+    });
   }
 
   try {
     await existingBinding.update({ ...changes });
-    return interaction.reply(`Successfully updated binding for <@&${roleId}>!`);
+    return interaction.reply({
+      content: `Successfully updated binding for <@&${roleId}>!`,
+      ephemeral: true,
+    });
   } catch (_error) {
-    return interaction.reply(
-      "Hmm... had an internal error updating that role."
-    );
+    return interaction.reply({
+      content: "Hmm... had an internal error updating that role.",
+      ephemeral: true,
+    });
   }
 };
 

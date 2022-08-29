@@ -1,6 +1,4 @@
-import { ENUM } from "sequelize";
-import { TEXT } from "sequelize";
-import { Sequelize, STRING } from "sequelize";
+import { Sequelize, STRING, ENUM, INTEGER, TEXT } from "sequelize";
 
 export const sequelize = new Sequelize("database", "user", "password", {
   host: "localhost",
@@ -18,5 +16,7 @@ export const Tags = sequelize.define("tags", {
   },
   emoji: STRING,
   class: ENUM("freshman", "sophomore", "junior", "senior", "grad"),
-  category: ENUM("course", "pronoun", "other"),
+  category: ENUM("course", "pronoun", "class", "other"),
+  guild: STRING,
+  rank: INTEGER,
 });
