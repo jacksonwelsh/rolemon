@@ -81,7 +81,7 @@ client.on("interactionCreate", async (interaction) => {
     case "select-5000":
       roleClass = RoleType.GRAD;
       break;
-    case "select-pronoun":
+    case "select-pronouns":
       roleClass = RoleType.PRONOUN;
       break;
     case "select-class":
