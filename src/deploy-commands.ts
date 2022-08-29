@@ -3,7 +3,7 @@ import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
 import environment from "./env";
 
-const { clientId, guildIds, token } = environment;
+const { clientId, token } = environment;
 
 const commands = [
   new SlashCommandBuilder()
@@ -181,9 +181,7 @@ const commands = [
 
 const rest = new REST({ version: "9" }).setToken(token);
 
-guildIds.forEach((guildId) =>
-  rest
-    .put(Routes.applicationGuildCommands(clientId, guildId), { body: commands })
-    .then(() => console.log("Successfully registered application commands"))
-    .catch(console.error)
-);
+rest
+  .put(Routes.applicationCommands(clientId), { body: commands })
+  .then(() => console.log("Successfully registered application commands"))
+  .catch(console.error);
