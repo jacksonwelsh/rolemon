@@ -155,6 +155,9 @@ export const sendRoleSelect = async (
         : null,
     ].filter((item) => item != null) as MessageRow[];
   } else {
+    const classRoles = roles[RoleType.CLASS];
+    const pronounRoles = roles[RoleType.PRONOUN];
+
     rows = [
       new MessageActionRow().addComponents(
         new MessageSelectMenu()
@@ -162,20 +165,15 @@ export const sendRoleSelect = async (
           .setMinValues(0)
           .setMaxValues(3)
           .setPlaceholder("Pronouns")
-          .addOptions([
-            {
-              label: "he/him",
-              value: "hehim",
-            },
-            {
-              label: "she/her",
-              value: "sheher",
-            },
-            {
-              label: "they/them",
-              value: "theythem",
-            },
-          ])
+          .addOptions(
+            pronounRoles.map((role) => ({
+              ...role,
+              default: userHasRole(
+                role.roleId,
+                interaction.member as GuildMember
+              ),
+            }))
+          )
       ),
       new MessageActionRow().addComponents(
         new MessageSelectMenu()
@@ -183,38 +181,15 @@ export const sendRoleSelect = async (
           .setMinValues(0)
           .setMaxValues(1)
           .setPlaceholder("Class")
-          .addOptions([
-            {
-              label: "Freshman",
-              value: "freshman",
-              emoji: "906036595717718016",
-            },
-            {
-              label: "Sophomore",
-              value: "sophomore",
-              emoji: "906036595629625384",
-            },
-            {
-              label: "Junior",
-              value: "junior",
-              emoji: "906036736973496360",
-            },
-            {
-              label: "Senior",
-              value: "senior",
-              emoji: "906036736973496360",
-            },
-            {
-              label: "Grad",
-              value: "grad",
-              emoji: "906036737384534046",
-            },
-            {
-              label: "Alumni",
-              value: "alumni",
-              emoji: "906036736830885890",
-            },
-          ])
+          .addOptions(
+            classRoles.map((role) => ({
+              ...role,
+              default: userHasRole(
+                role.roleId,
+                interaction.member as GuildMember
+              ),
+            }))
+          )
       ),
     ];
   }
