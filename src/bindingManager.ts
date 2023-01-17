@@ -36,6 +36,8 @@ export const handleCreateRoleBinding = async (
   const [courseCategory, overarchingCategory] =
     distillCategory(responseCategory);
 
+  const guildId = interaction.guildId;
+
   try {
     const tag = await Tags.create({
       name,
@@ -44,6 +46,7 @@ export const handleCreateRoleBinding = async (
       emoji,
       class: courseCategory,
       category: overarchingCategory,
+      guild: guildId,
     });
 
     return interaction.reply({
