@@ -45,6 +45,7 @@ export const sendRoleSelect = async (
   interaction: CommandInteraction<CacheType> | ButtonInteraction<CacheType>,
   type: OverarchingCategory
 ) => {
+  if (interaction.replied) return;
   if (!interaction.guildId)
     return interaction.reply({
       content: "Could not get guild information",
